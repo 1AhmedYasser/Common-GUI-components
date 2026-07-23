@@ -436,7 +436,6 @@ export const FormCombobox: FC<FormComboboxProps> = ({
                   checked={isSelected}
                   value={option.value}
                   onChange={() => null}
-                  onClick={(event) => event.preventDefault()}
                 />
                 <span>{option.label}</span>
               </li>

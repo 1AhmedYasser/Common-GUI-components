@@ -4,6 +4,10 @@ All changes to this project will be documented in this file.
 
 ## Template [MajorVersion.MediterraneanVersion.MinorVersion] - DD-MM-YYYY
 
+## [0.0.65] 22.07.2026
+
+- Fixed multi-select FormCombobox checkbox selection and aligned its cursor with the option row
+
 ## [0.0.64] - 17.07.2026
 
 - Fixed Long Url's column ui
