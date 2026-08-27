@@ -4,9 +4,15 @@ All changes to this project will be documented in this file.
 
 ## Template [MajorVersion.MediterraneanVersion.MinorVersion] - DD-MM-YYYY
 
-## [0.0.64] - 06.07.2026
+## [0.0.65] 22.07.2026
 
-- Fixed analytics dropdown on domain change
+- Fixed multi-select FormCombobox checkbox selection and aligned its cursor with the option row
+
+## [0.0.64] - 17.07.2026
+
+- Fixed Long Url's column ui
+- Updated sanitize-html package to latest version
+- Added yes/no filter to Comment and Feedback columns in the chat history table
 
 ## [0.0.63] - 06.07.2026
 

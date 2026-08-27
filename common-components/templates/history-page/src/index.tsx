@@ -761,16 +761,19 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
         );
     };
 
-    const wwwView = (props: any) => (
-        <Tooltip content={props.getValue() ?? ''}>
-            <button
-                onClick={() => copyValueToClipboard(props.getValue())}
-                style={{cursor: 'pointer'}}
-            >
-                {props.getValue() ?? ''}
+    const wwwView = (props: any) => {
+        const value = props.getValue() ?? '';
+        const isTruncated = value.length > 40;
+        const displayValue = isTruncated ? `${value.slice(0, 40)}...` : value;
+
+        const button = (
+            <button onClick={() => copyValueToClipboard(value)} style={{cursor: 'pointer'}}>
+                {displayValue}
             </button>
-        </Tooltip>
-    );
+        );
+
+        return isTruncated ? <Tooltip content={value}>{button}</Tooltip> : button;
+    };
 
     const statusView = (props: any) => {
         const isLastMessageEvent =
@@ -928,6 +931,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
         readonly showAuthenticatedPerson?: boolean;
         readonly isTestFilter?: boolean;
         readonly isPreserveFilter?: boolean;
+        readonly hasCommentFilter?: boolean;
+        readonly hasFeedbackFilter?: boolean;
         readonly domains: string[];
         readonly status: string[];
         readonly theme: string[];
@@ -940,6 +945,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
             showAuthenticatedPerson: undefined,
             isTestFilter: undefined,
             isPreserveFilter: undefined,
+            hasCommentFilter: undefined,
+            hasFeedbackFilter: undefined,
             domains: [],
             status: [],
             theme: [],
@@ -953,6 +960,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
     const showAuthenticatedPerson = tableHeaderForm.watch('showAuthenticatedPerson');
     const isTestFilter = tableHeaderForm.watch('isTestFilter');
     const isPreserveFilter = tableHeaderForm.watch('isPreserveFilter');
+    const hasCommentFilter = tableHeaderForm.watch('hasCommentFilter');
+    const hasFeedbackFilter = tableHeaderForm.watch('hasFeedbackFilter');
     const domains = tableHeaderForm.watch('domains');
     const status = tableHeaderForm.watch('status');
     const theme = tableHeaderForm.watch('theme');
@@ -978,7 +987,7 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
             sorting,
             search,
         });
-    }, [csaIdCodesFilter, feedbackRatings, showAuthenticatedPerson, isTestFilter, isPreserveFilter, domains, status, theme, responseQuality, followUpStatus]);
+    }, [csaIdCodesFilter, feedbackRatings, showAuthenticatedPerson, isTestFilter, isPreserveFilter, hasCommentFilter, hasFeedbackFilter, domains, status, theme, responseQuality, followUpStatus]);
 
     const getBooleanComboboxValue = (value?: boolean) =>
         value === undefined ? '' : String(value);
@@ -1061,6 +1070,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
             case 'showAuthenticatedPerson':
             case 'isTestFilter':
             case 'isPreserveFilter':
+            case 'hasCommentFilter':
+            case 'hasFeedbackFilter':
                 setTableHeaderValue(filter, undefined);
                 return;
             case 'domains':
@@ -1173,6 +1184,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
         const currentIsTestValues = getBooleanApiFilterValue(isTestFilter);
         const currentShowAuthenticatedPersonValues = getBooleanApiFilterValue(showAuthenticatedPerson);
         const currentIsPreserveValues = getBooleanApiFilterValue(isPreserveFilter);
+        const currentHasCommentValues = getBooleanApiFilterValue(hasCommentFilter);
+        const currentHasFeedbackValues = getBooleanApiFilterValue(hasFeedbackFilter);
         const currentThemeValues = getRealStringFilterValues(theme);
         const currentResponseQualityValues = getRealStringFilterValues(responseQuality);
         const currentFollowUpStatusValues = getRealStringFilterValues(followUpStatus);
@@ -1188,6 +1201,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
             ...(currentIsTestValues.length > 0 && {isTest: currentIsTestValues}),
             ...(currentShowAuthenticatedPersonValues.length > 0 && {authenticatedChats: currentShowAuthenticatedPersonValues}),
             ...(currentIsPreserveValues.length > 0 && {isPreserve: currentIsPreserveValues}),
+            ...(currentHasCommentValues.length > 0 && {hasComment: currentHasCommentValues}),
+            ...(currentHasFeedbackValues.length > 0 && {hasFeedback: currentHasFeedbackValues}),
             ...(currentStatusValues.length > 0 && {status: currentStatusValues}),
         };
     }, [
@@ -1198,6 +1213,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
         followUpStatus,
         isPreserveFilter,
         isTestFilter,
+        hasCommentFilter,
+        hasFeedbackFilter,
         responseQuality,
         showAuthenticatedPerson,
         showTest,
@@ -1344,7 +1361,20 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
             }),
             columnHelper.accessor('comment', {
                 id: 'comment',
-                header: t('chat.history.comment') ?? '',
+                header: () => {
+                    return (
+                        <HeaderCombobox
+                            label={t('chat.history.comment') ?? ''}
+                            options={booleanFilterOptions}
+                            value={getBooleanComboboxValue(hasCommentFilter)}
+                            onChange={(value) => {
+                                setTableHeaderValue('hasCommentFilter', getBooleanFormValue(value));
+                            }}
+                            multiple={false}
+                            isSearchEnabled={false}
+                        />
+                    );
+                },
                 cell: commentView,
                 enableSorting: false,
                 sortDescFirst: false,
@@ -1380,7 +1410,20 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
             }),
             columnHelper.accessor('feedbackText', {
                 id: 'feedbackText',
-                header: t('chat.history.feedback'),
+                header: () => {
+                    return (
+                        <HeaderCombobox
+                            label={t('chat.history.feedback') ?? ''}
+                            options={booleanFilterOptions}
+                            value={getBooleanComboboxValue(hasFeedbackFilter)}
+                            onChange={(value) => {
+                                setTableHeaderValue('hasFeedbackFilter', getBooleanFormValue(value));
+                            }}
+                            multiple={false}
+                            isSearchEnabled={false}
+                        />
+                    );
+                },
                 cell: feedbackTextView,
                 enableSorting: false,
                 sortDescFirst: false,
@@ -1567,6 +1610,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
         showAuthenticatedPerson,
         isTestFilter,
         isPreserveFilter,
+        hasCommentFilter,
+        hasFeedbackFilter,
         domains,
         status,
         theme,
@@ -1807,6 +1852,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
             showAuthenticatedPerson: undefined,
             isTestFilter: undefined,
             isPreserveFilter: undefined,
+            hasCommentFilter: undefined,
+            hasFeedbackFilter: undefined,
             domains: [],
             status: [],
             theme: [],
@@ -2122,6 +2169,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
                 showTestFilter={testMessageEnabled}
                 isTestFilter={isTestFilter}
                 isPreserveFilter={isPreserveFilter}
+                hasCommentFilter={hasCommentFilter}
+                hasFeedbackFilter={hasFeedbackFilter}
                 domains={domainFilterValues}
                 feedbackRatings={feedbackRatingFilterValues}
                 status={statusFilterValues}

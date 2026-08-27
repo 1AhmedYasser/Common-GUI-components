@@ -14,6 +14,8 @@ type SelectedFilterTagsProps = {
   readonly showTestFilter: boolean;
   readonly isTestFilter?: boolean;
   readonly isPreserveFilter?: boolean;
+  readonly hasCommentFilter?: boolean;
+  readonly hasFeedbackFilter?: boolean;
   readonly domains: string[];
   readonly feedbackRatings: string[];
   readonly status: string[];
@@ -29,6 +31,8 @@ type SelectedFilterTagFilter =
   | 'showAuthenticatedPerson'
   | 'isTestFilter'
   | 'isPreserveFilter'
+  | 'hasCommentFilter'
+  | 'hasFeedbackFilter'
   | 'domains'
   | 'feedbackRatings'
   | 'status'
@@ -45,6 +49,8 @@ const SelectedFilterTags: FC<SelectedFilterTagsProps> = ({
   showTestFilter,
   isTestFilter,
   isPreserveFilter,
+  hasCommentFilter,
+  hasFeedbackFilter,
   domains,
   feedbackRatings,
   status,
@@ -60,6 +66,8 @@ const SelectedFilterTags: FC<SelectedFilterTagsProps> = ({
     showAuthenticatedPerson !== undefined ||
     (showTestFilter && isTestFilter !== undefined) ||
     isPreserveFilter !== undefined ||
+    hasCommentFilter !== undefined ||
+    hasFeedbackFilter !== undefined ||
     domains.length !== 0 ||
     feedbackRatings.length !== 0 ||
     status.length !== 0 ||
@@ -121,6 +129,30 @@ const SelectedFilterTags: FC<SelectedFilterTagsProps> = ({
               <FilterTag
                 text={isPreserveFilter ? t('global.yes') : t('global.no')}
                 onClick={() => onRemove('isPreserveFilter', isPreserveFilter)}
+              />
+            </div>
+          </>
+        )}
+
+        {hasCommentFilter !== undefined && (
+          <>
+            <p className="selected-filters__label">{t('chat.history.comment')}:</p>
+            <div className="selected-filters__items">
+              <FilterTag
+                text={hasCommentFilter ? t('global.yes') : t('global.no')}
+                onClick={() => onRemove('hasCommentFilter', hasCommentFilter)}
+              />
+            </div>
+          </>
+        )}
+
+        {hasFeedbackFilter !== undefined && (
+          <>
+            <p className="selected-filters__label">{t('chat.history.feedback')}:</p>
+            <div className="selected-filters__items">
+              <FilterTag
+                text={hasFeedbackFilter ? t('global.yes') : t('global.no')}
+                onClick={() => onRemove('hasFeedbackFilter', hasFeedbackFilter)}
               />
             </div>
           </>
