@@ -399,7 +399,7 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
         return userWidgetDomains.data?.find(domain => domain.url === selectedChat?.endUserUrl)?.id ?? null;
     }, [selectedChat]);
     const qualitySettingsConfigQuery = useQuery<QualitySettingsConfig>({
-        queryKey: ['configs/chat-analysis'],
+        queryKey: ['configs/chat-analysis', selectedChatDomainUuid ?? GLOBAL_FEEDBACK_CONFIG_DOMAIN],
         queryFn: () => loadQualitySettingsConfig(selectedChatDomainUuid ? selectedChatDomainUuid : GLOBAL_FEEDBACK_CONFIG_DOMAIN),
     });
 

@@ -4,6 +4,10 @@ All changes to this project will be documented in this file.
 
 ## Template [MajorVersion.MediterraneanVersion.MinorVersion] - DD-MM-YYYY
 
+## [0.0.64] - 06.07.2026
+
+- Fixed analytics dropdown on domain change
+
 ## [0.0.63] - 06.07.2026
 
 - Modified toast position and appearance
