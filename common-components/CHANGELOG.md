@@ -4,6 +4,10 @@ All changes to this project will be documented in this file.
 
 ## Template [MajorVersion.MediterraneanVersion.MinorVersion] - DD-MM-YYYY
 
+## [0.0.75] - 09-11-2026
+
+- Prevented multiple ended chats requests on history page load
+
 ## [0.0.74] - 28-10-2026
 
 - Modified conversations to be scrolled to the top

@@ -215,7 +215,8 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
     const passedStartDate = delegatedStartDate ?? params.get("start");
     const passedEndDate = delegatedEndDate ?? params.get("end");
     const skipNextSelectedColumnsEffect = useRef(false);
-    const skipInitialTableHeaderFilterEffect = useRef(true);
+    const initialFetchStartedRef = useRef(false);
+    const initialFetchDoneRef = useRef(false);
     const [selectedChat, setSelectedChat] = useState<ChatType | null>(null);
     const [searchParams, setSearchParams] = useSearchParams();
     const [statusChangeModal, setStatusChangeModal] = useState<string | null>(
@@ -246,7 +247,9 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
 
     const useStore = userDomains;
     const [updateKey, setUpdateKey] = useState<number>(0)
-    const currentDomains = useStore.getState().userDomains as string[];
+    const storeDomains = useStore.getState().userDomains as string[];
+    const currentDomainsKey = JSON.stringify([...(storeDomains ?? [])].sort());
+    const currentDomains = useMemo(() => storeDomains ?? [], [currentDomainsKey]);
     const multiDomainEnabled = import.meta.env.REACT_APP_ENABLE_MULTI_DOMAIN?.toLowerCase() === 'true';
     const testMessageEnabled = import.meta.env.REACT_APP_SHOW_TEST_MESSAGE?.toLowerCase() === 'true';
     const envVal = import.meta.env.REACT_APP_SHOW_TEST_CONVERSATIONS;
@@ -343,7 +346,10 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
 
 
     const fetchData = async () => {
+        if (initialFetchStartedRef.current) return;
+        initialFetchStartedRef.current = true;
         setInitialLoad(false);
+        let initialPagination = pagination;
         try {
             const response = await apiDev.get('/accounts/get-page-preference', {
                 params: {
@@ -355,7 +361,7 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
             if (response.data) {
                 const currentColumns = response.data.selectedColumns;
                 const newPageResults = response.data.pageResults !== undefined ? response.data.pageResults : 10;
-                const updatedPagination = updatePagePreference(newPageResults);
+                initialPagination = updatePagePreference(newPageResults);
 
                 let newSelectedColumns = [];
                 if (currentColumns?.length > 0 && currentColumns[0] !== "") {
@@ -365,18 +371,19 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
                 skipNextSelectedColumnsEffect.current = true;
                 setSelectedColumns(getUiSelectedColumns(newSelectedColumns));
                 setCounterKey(prev => prev + 1);
-
-                getAllEndedChats.mutate({
-                    startDate: formatISO(startOfDay(new Date(startDate))),
-                    endDate: formatISO(endOfDay(new Date(endDate))),
-                    pagination: updatedPagination,
-                    sorting,
-                    search,
-                });
             }
         } catch (err) {
             console.error('Failed to fetch data', err);
         }
+
+        initialFetchDoneRef.current = true;
+        getAllEndedChats.mutate({
+            startDate: formatISO(startOfDay(new Date(startDate))),
+            endDate: formatISO(endOfDay(new Date(endDate))),
+            pagination: initialPagination,
+            sorting,
+            search,
+        });
     };
 
     const updatePagePreference = (pageResults: number): PaginationState => {
@@ -400,11 +407,27 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
         return qualitySettingsConfigQuery.data?.chatAnalysisEnabled ?? false;
     }, [qualitySettingsConfigQuery.data]);
 
+    const selectedWidgetDomainsKey = useMemo(() => JSON.stringify(
+        (userWidgetDomains.data ?? [])
+            .filter((domain) => domain.selected)
+            .map((domain) => domain.url)
+            .filter(Boolean)
+            .sort()
+    ), [userWidgetDomains.data]);
+
+    const areDomainsReady = !multiDomainEnabled
+        || !userInfo?.idCode
+        || userWidgetDomains.isError
+        || (userWidgetDomains.isSuccess && (selectedWidgetDomainsKey === '[]' || selectedWidgetDomainsKey === currentDomainsKey));
+
     useEffect(() => {
-        if (initialLoad) {
-            if (qualitySettingsConfigQuery.isLoading) return;
-            fetchData();
-        } else if (skipNextSelectedColumnsEffect.current) {
+        if (!initialLoad || qualitySettingsConfigQuery.isLoading || !areDomainsReady) return;
+        fetchData();
+    }, [initialLoad, qualitySettingsConfigQuery.isLoading, areDomainsReady]);
+
+    useEffect(() => {
+        if (!initialFetchDoneRef.current) return;
+        if (skipNextSelectedColumnsEffect.current) {
             skipNextSelectedColumnsEffect.current = false;
         } else {
             getAllEndedChats.mutate({
@@ -978,10 +1001,7 @@ const ChatHistory: FC<PropsWithChildren<HistoryProps>> = ({
     const followUpStatus = tableHeaderForm.watch('followUpStatus');
 
     useEffect(() => {
-        if (skipInitialTableHeaderFilterEffect.current) {
-            skipInitialTableHeaderFilterEffect.current = false;
-            return;
-        }
+        if (!initialFetchDoneRef.current) return;
 
         const resetPagination = { pageIndex: 0, pageSize: pagination.pageSize };
         setPagination(resetPagination);
